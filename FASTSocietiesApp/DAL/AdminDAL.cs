@@ -176,6 +176,80 @@ namespace FASTSocietiesApp.DAL
         }
 
         /// <summary>
+        /// Retrieves pending events that need admin approval.
+        /// </summary>
+        public List<EventModel> GetPendingEvents()
+        {
+            const string sql =
+                "SELECT e.EventId, e.SocietyId, e.Title, e.Description, e.EventDate, " +
+                "       e.Venue, e.Capacity, e.Status, e.CreatedAt, " +
+                "       s.Name AS SocietyName " +
+                "FROM Events e " +
+                "INNER JOIN Societies s ON s.SocietyId = e.SocietyId " +
+                "WHERE e.Status = 'Pending' " +
+                "ORDER BY e.EventDate ASC;";
+
+            List<EventModel> events = new List<EventModel>();
+
+            try
+            {
+                using SqlConnection connection = new SqlConnection(DbHelper.GetConnectionString());
+                using SqlCommand command = new SqlCommand(sql, connection);
+
+                connection.Open();
+                using SqlDataReader reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    int descOrdinal = reader.GetOrdinal("Description");
+                    int venueOrdinal = reader.GetOrdinal("Venue");
+                    events.Add(new EventModel
+                    {
+                        EventId = reader.GetInt32(reader.GetOrdinal("EventId")),
+                        SocietyId = reader.GetInt32(reader.GetOrdinal("SocietyId")),
+                        Title = reader.GetString(reader.GetOrdinal("Title")),
+                        Description = reader.IsDBNull(descOrdinal) ? null : reader.GetString(descOrdinal),
+                        EventDate = reader.GetDateTime(reader.GetOrdinal("EventDate")),
+                        Venue = reader.IsDBNull(venueOrdinal) ? null : reader.GetString(venueOrdinal),
+                        Capacity = reader.GetInt32(reader.GetOrdinal("Capacity")),
+                        Status = reader.GetString(reader.GetOrdinal("Status")),
+                        CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
+                        SocietyName = reader.GetString(reader.GetOrdinal("SocietyName"))
+                    });
+                }
+                return events;
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("AdminDAL.GetPendingEvents failed.", ex);
+                throw new AppException("Failed to load pending events.", ex);
+            }
+        }
+
+        /// <summary>
+        /// Approves a pending event.
+        /// </summary>
+        public bool ApproveEvent(int eventId)
+        {
+            const string sql = "UPDATE Events SET Status = 'Approved' WHERE EventId = @EventId;";
+
+            try
+            {
+                using SqlConnection connection = new SqlConnection(DbHelper.GetConnectionString());
+                using SqlCommand command = new SqlCommand(sql, connection);
+                command.Parameters.Add("@EventId", SqlDbType.Int).Value = eventId;
+
+                connection.Open();
+                int rowsAffected = command.ExecuteNonQuery();
+                return rowsAffected == 1;
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("AdminDAL.ApproveEvent failed.", ex);
+                throw new AppException("Failed to approve the event.", ex);
+            }
+        }
+
+        /// <summary>
         /// Returns university-wide statistics.
         /// </summary>
         public UniversityReportModel GetUniversityWideReport()

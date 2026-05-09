@@ -84,6 +84,27 @@ namespace FASTSocietiesApp.BLL
             return true;
         }
 
+        public List<EventModel> GetPendingEvents()
+        {
+            ValidateAdminRole();
+            return _adminDal.GetPendingEvents();
+        }
+
+        public bool ApproveEvent(int eventId)
+        {
+            ValidateAdminRole();
+
+            if (eventId <= 0)
+                throw new AppException("Invalid event details.");
+
+            bool success = _adminDal.ApproveEvent(eventId);
+            if (!success)
+            {
+                throw new AppException("Failed to approve event.");
+            }
+            return true;
+        }
+
         public UniversityReportModel GetUniversityWideReport()
         {
             ValidateAdminRole();

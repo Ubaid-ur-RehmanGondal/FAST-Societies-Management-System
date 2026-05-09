@@ -23,6 +23,10 @@ namespace FASTSocietiesApp.Forms.Admin
         private Button btnApproveSociety = null!;
         private Button btnSuspendSociety = null!;
 
+        private Label lblPendingEventsHeader = null!;
+        private DataGridView dgvPendingEvents = null!;
+        private Button btnApproveEvent = null!;
+
         private static readonly Color HeaderColor = Color.FromArgb(33, 37, 41);
         private static readonly Color PrimaryColor = Color.DodgerBlue;
 
@@ -37,7 +41,7 @@ namespace FASTSocietiesApp.Forms.Admin
         private void InitializeForm()
         {
             Text = "FAST Societies — Admin Dashboard";
-            ClientSize = new Size(1150, 750);
+            ClientSize = new Size(1150, 1000);
             StartPosition = FormStartPosition.CenterScreen;
             BackColor = Color.FromArgb(245, 247, 250);
             Font = new Font("Segoe UI", 9.5F);
@@ -48,12 +52,14 @@ namespace FASTSocietiesApp.Forms.Admin
             BuildHeaderAndReport();
             BuildUsersPanel();
             BuildSocietiesPanel();
+            BuildEventsPanel();
 
             Controls.AddRange(new Control[]
             {
                 lblWelcome, btnLogout, lblReportSummary,
                 lblUsersHeader, dgvUsers, btnToggleUserStatus,
-                lblSocietiesHeader, dgvSocieties, btnApproveSociety, btnSuspendSociety
+                lblSocietiesHeader, dgvSocieties, btnApproveSociety, btnSuspendSociety,
+                lblPendingEventsHeader, dgvPendingEvents, btnApproveEvent
             });
         }
 
@@ -125,6 +131,28 @@ namespace FASTSocietiesApp.Forms.Admin
             btnSuspendSociety.Click += BtnSuspendSociety_Click;
         }
 
+        private void BuildEventsPanel()
+        {
+            lblPendingEventsHeader = new Label
+            {
+                Text = "Pending Events",
+                Font = new Font("Segoe UI", 12F, FontStyle.Bold),
+                Location = new Point(24, 740),
+                Size = new Size(200, 25)
+            };
+
+            dgvPendingEvents = CreateGrid(new Point(24, 770), new Size(850, 150));
+            dgvPendingEvents.Columns.Add(new DataGridViewTextBoxColumn { Name = "EventId", DataPropertyName = "EventId", Visible = false });
+            dgvPendingEvents.Columns.Add(new DataGridViewTextBoxColumn { Name = "Title", DataPropertyName = "Title", HeaderText = "Title", FillWeight = 30 });
+            dgvPendingEvents.Columns.Add(new DataGridViewTextBoxColumn { Name = "SocietyName", DataPropertyName = "SocietyName", HeaderText = "Society", FillWeight = 30 });
+            dgvPendingEvents.Columns.Add(new DataGridViewTextBoxColumn { Name = "EventDate", DataPropertyName = "EventDate", HeaderText = "Date", FillWeight = 20, DefaultCellStyle = { Format = "dd MMM yyyy" } });
+            dgvPendingEvents.Columns.Add(new DataGridViewTextBoxColumn { Name = "Status", DataPropertyName = "Status", HeaderText = "Status", FillWeight = 20 });
+
+            btnApproveEvent = CreateButton("Approve Event", new Point(24, 940), Color.SeaGreen);
+            btnApproveEvent.Size = new Size(150, 30);
+            btnApproveEvent.Click += BtnApproveEvent_Click;
+        }
+
         private DataGridView CreateGrid(Point location, Size size)
         {
             var grid = new DataGridView
@@ -164,6 +192,9 @@ namespace FASTSocietiesApp.Forms.Admin
 
                 dgvSocieties.DataSource = null;
                 dgvSocieties.DataSource = _adminBll.GetAllSocieties();
+
+                dgvPendingEvents.DataSource = null;
+                dgvPendingEvents.DataSource = _adminBll.GetPendingEvents();
             }
             catch (AppException ex)
             {
@@ -231,6 +262,26 @@ namespace FASTSocietiesApp.Forms.Admin
             {
                 Logger.Error("Unexpected error processing society.", ex);
                 MessageBox.Show("An unexpected error occurred.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void BtnApproveEvent_Click(object? sender, EventArgs e)
+        {
+            try
+            {
+                if (dgvPendingEvents.CurrentRow == null || dgvPendingEvents.CurrentRow.DataBoundItem is not EventModel ev)
+                {
+                    MessageBox.Show("Please select an event.", "Selection Required", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+
+                _adminBll.ApproveEvent(ev.EventId);
+                MessageBox.Show("Event approved successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                LoadDashboardData();
+            }
+            catch (AppException ex)
+            {
+                MessageBox.Show(ex.Message, "Action Failed", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
 
