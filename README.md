@@ -1,7 +1,7 @@
 # FAST Societies Management System
 
 ![.NET](https://img.shields.io/badge/.NET-5C2D91?style=for-the-badge&logo=.net&logoColor=white)
-![C#](https://img.shields.io/badge/c%23-%23239120.style=for-the-badge&logo=c-sharp&logoColor=white)
+![C#](https://img.shields.io/badge/c%23-%23239120?style=for-the-badge&logo=c-sharp&logoColor=white)
 ![SQL Server](https://img.shields.io/badge/SQLServer-CC2927?style=for-the-badge&logo=microsoft-sql-server&logoColor=white)
 
 A robust, multi-role desktop application built in C# to digitize and manage university student societies. This system replaces manual spreadsheet tracking with a centralized database, handling everything from student registrations and society approvals to task delegation and event ticketing.
